@@ -10,7 +10,7 @@ class VideoManager:
     self.MAX_FRAME = len(self.frame_paths)
   
   def load_frames(self, video_path):
-    frame_paths = glob.glob(os.path.join(video_path, "*.png"))
+    frame_paths = glob.glob(os.path.join(video_path, "*.jpg"))
     frame_paths.sort()
     self.frame_paths = frame_paths
     self.current_frame_idx = 0
