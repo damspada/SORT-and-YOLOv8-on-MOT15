@@ -1,25 +1,25 @@
 import cv2
+import glob
+import os
 
-class DatasetManager:
-    def __init__(self, video_path):
-        self.all_videos = cv2.VideoCapture(video_path)
+from config.variables import FOLDER_PATH
 
-        if not self.cap.isOpened():
-            raise ValueError(f"Impossibile aprire il video: {video_path}")
+class VideoManager:
+  def __init__(self, video_name):
+    self.load_frames(video_name)
+    self.MAX_FRAME = len(self.frame_paths)
+  
+  def load_frames(self, video_name):
+    img_folder = os.path.join(FOLDER_PATH, video_name, "img1")
+    frame_paths = glob.glob(os.path.join(img_folder, "*.png"))
+    frame_paths.sort()
+    self.frame_paths = frame_paths
+    self.current_frame_idx = 0
 
-        self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    def get_next_frame(self):
-        ret, frame = self.cap.read()
-        if not ret:
-            return None  # Fine del video
-        return frame
-
-    def has_next(self):
-        return self.cap.isOpened()
-
-    def release(self):
-        self.cap.release()
+  def get_next_frame(self):
+    if self.current_frame_idx >= len(self.frame_paths):
+        return None
+    frame_path = self.frame_paths[self.current_frame_idx]
+    frame = cv2.imread(frame_path)
+    self.current_frame_idx += 1
+    return frame
