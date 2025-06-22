@@ -2,8 +2,6 @@ import cv2
 import glob
 import os
 
-from config.variables import FOLDER_PATH
-
 class VideoManager:
   def __init__(self, video_path):
     self.load_frames(video_path)
@@ -16,7 +14,7 @@ class VideoManager:
     self.current_frame_idx = 0
 
   def get_next_frame(self):
-    if self.current_frame_idx >= len(self.frame_paths):
+    if self.current_frame_idx >= self.MAX_FRAME:
         return None
     frame_path = self.frame_paths[self.current_frame_idx]
     frame = cv2.imread(frame_path)
