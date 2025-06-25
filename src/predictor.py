@@ -3,6 +3,10 @@ from src.track import Track
 
 class Prediction:
 
+  """
+  The prediction is done with the Kalman Filter algorithm
+  """
+
   def __init__(self, dt):
 
     # acceleration could be inserted
