@@ -23,6 +23,7 @@ class Matcher:
   #   else:
   #     return intersection_boxes
   
+  @staticmethod
   def _IoU_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> torch.Tensor:
     """
     tracks shape:     (N,4)
@@ -52,6 +53,7 @@ class Matcher:
     # The Hungarian algorithm minimizes cost, so we use 1 - IoU
     return torch.ones_like(union_boxes) - (intersection_boxes / union_boxes) #(N,M)
 
+  @staticmethod
   def _rectangle_to_square(matrix: torch.Tensor) -> torch.Tensor:
     """
     Trasform a matrix (N,M) in:
@@ -59,6 +61,12 @@ class Matcher:
       (M,M) if M > N
     All new entries are set to 1e6 to discourage assignments by the algorithm
     """
+    N, M = matrix.shape[0], matrix.shape[1]
+    if N > M:
+      matrix = torch.cat([matrix, torch.full((N, N-M), 1e6)], dim=1)
+    if M > M:
+      matrix = torch.cat([matrix, torch.full((M-N, M), 1e6)], dim=0)
+    return matrix
 
   def match_tracks_and_detections(self, tracks: torch.Tensor, detections: torch.Tensor):
     # Step 0 -> Build hungarian matrix (N,N) with the cost
