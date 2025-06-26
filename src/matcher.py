@@ -23,7 +23,36 @@ class Matcher:
     else:
       return intersection_boxes
   
-  def match_tracks_and_detections(tracks: List[torch.Tensor], detections: List[torch.Tensor]):
+  def _IoU_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> torch.Tensor:
+    """
+    tracks shape:     (N,4)
+    detections shape: (M,4)
+    output shape:     (N,M)
+    """
+    # Unsqueeze enables broadcasting (requires 2+ dimensions)
+    tracks = tracks.unsqueeze(1)         #(N,1,4)
+    detections = detections.unsqueeze(0) #(1,M,4)
+
+    # C[i:j] = max(tracks[i], detections[j])
+    x_sx = torch.maximum(tracks[:,:,0], detections[:,:,0]) #(N,M)
+    y_sx = torch.maximum(tracks[:,:,1], detections[:,:,1]) #(N,M)
+    x_dx = torch.minimum(tracks[:,:,2], detections[:,:,2]) #(N,M)
+    y_dx = torch.minimum(tracks[:,:,3], detections[:,:,3]) #(N,M)
+
+    # Calculate intersection and set negative value to zero (no intersection)
+    intersection_x = torch.clamp(x_dx - x_sx, min=0)     #(N,M)
+    intersection_y = torch.clamp(y_dx - y_sx, min=0)     #(N,M)
+    intersection_boxes = intersection_x * intersection_y #(N,M)
+
+    # Calculate the union area for each track and detection
+    tracks_areas = (tracks[:,:,2] - tracks[:,:,0]) * (tracks[:,:,2] - tracks[:,:,0]) #(N,1)
+    detection_areas = (detections[:,:,2] - detections[:,:,0]) * (detections[:,:,2] - detections[:,:,0]) #(1,M)
+    union_boxes = tracks_areas * detection_areas - intersection_boxes #(N,M)
+
+    # Hungarian Matrix
+    return intersection_boxes / union_boxes #(N,M)
+
+  # def match_tracks_and_detections(self, tracks: torch.Tensor, detections: torch.Tensor):
 
 
 
