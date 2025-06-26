@@ -68,16 +68,33 @@ class Matcher:
       matrix = torch.cat([matrix, torch.full((M-N, M), 1e6)], dim=0)
     return matrix
 
+  @staticmethod
+  def _subtract_on_dimensions(H: torch.Tensor, dim: int):
+    mins, _ = H.min(dim = dim, keepdim=True)
+    return H - mins
+
+
   def match_tracks_and_detections(self, tracks: torch.Tensor, detections: torch.Tensor):
+
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
+    print(H)
+
     # Step 1 -> Subtract from each row the minimum element in it
+    H = self._subtract_on_dimensions(H, dim=1)
+
     # Step 2 -> Subtract from each column the minimum element in it
+    H = self._subtract_on_dimensions(H, dim=0)
+
     # Step 3 -> Cross the 0's with the minimum number of lines needed (if N==#lines jump to 5)
+    
     # Step 4 -> Find the smallest entry not covered by any line
     #           and subtract this entry to the entire matrix except 0 (jump to 3)
+    
     # Step 5 -> Assign detections to tracks starting with the line with only one zero,
     #           do not accept pairs with a cost greater than a threshold.
+
+    return H
     
 
 
