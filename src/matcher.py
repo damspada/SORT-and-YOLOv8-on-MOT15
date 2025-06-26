@@ -46,9 +46,9 @@ class Matcher:
     intersection_boxes = intersection_x * intersection_y #(N,M)
 
     # Calculate the union area for each track and detection
-    tracks_areas = (tracks[:,:,2] - tracks[:,:,0]) * (tracks[:,:,2] - tracks[:,:,0]) #(N,1)
-    detection_areas = (detections[:,:,2] - detections[:,:,0]) * (detections[:,:,2] - detections[:,:,0]) #(1,M)
-    union_boxes = tracks_areas * detection_areas - intersection_boxes #(N,M)
+    tracks_areas = (tracks[:,:,2] - tracks[:,:,0]) * (tracks[:,:,3] - tracks[:,:,1]) #(N,1)
+    detection_areas = (detections[:,:,2] - detections[:,:,0]) * (detections[:,:,3] - detections[:,:,1]) #(1,M)
+    union_boxes = tracks_areas + detection_areas - intersection_boxes #(N,M)
 
     # The Hungarian algorithm minimizes cost, so we use 1 - IoU
     return torch.ones_like(union_boxes) - (intersection_boxes / union_boxes) #(N,M)
@@ -64,7 +64,7 @@ class Matcher:
     N, M = matrix.shape[0], matrix.shape[1]
     if N > M:
       matrix = torch.cat([matrix, torch.full((N, N-M), 1e6)], dim=1)
-    if M > M:
+    if M > N:
       matrix = torch.cat([matrix, torch.full((M-N, M), 1e6)], dim=0)
     return matrix
 
