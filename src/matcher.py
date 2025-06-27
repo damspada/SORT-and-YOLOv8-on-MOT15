@@ -9,30 +9,17 @@ class Matcher:
   """
   The matching is done with the Hungarian algorithm and the IoU metric
   """
-  def __init__(self):
-    pass
-  
-  # def _IoU(A: torch.Tensor, B: torch.Tensor) -> float:
-  #   """
-  #   Shape of A and B is [x_sx, y_sx, x_dx, y_dx]
-  #   """
-  #   intersection_x = max(0, min(A[2], B[2] - max(A[0], B[0])))
-  #   intersection_y = max(0, min(A[3], B[3] - max(A[1], B[1])))
-  #   intersection_boxes = intersection_x * intersection_y
-  #   if intersection_boxes:
-  #     wA, wB = A[2]-A[0], B[2]-B[0]
-  #     hA, hB = A[3]-A[1], B[3]-B[1]
-  #     union_boxes = (wA * hA) + (wB * hB) - intersection_boxes
-  #     return intersection_boxes/union_boxes
-  #   else:
-  #     return intersection_boxes
-  
+
+
   @staticmethod
   def _IoU_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> torch.Tensor:
     """
     tracks shape:     (N,4)
     detections shape: (M,4)
     output shape:     (N,M)
+    Create a matrix where rows represent tracks, columns represent detections, 
+    and each element is a cost estimating how likely a track is associated with a detection.
+    Lower values indicate a better match.
     """
     # Unsqueeze enables broadcasting (requires 2+ dimensions)
     tracks = tracks.unsqueeze(1)         #(N,1,4)
@@ -57,13 +44,14 @@ class Matcher:
     # The Hungarian algorithm minimizes cost, so we use 1 - IoU
     return torch.ones_like(union_boxes) - (intersection_boxes / union_boxes) #(N,M)
 
+
   @staticmethod
   def _rectangle_to_square(matrix: torch.Tensor) -> torch.Tensor:
     """
     Trasform a matrix (N,M) in:
       (N,N) if N > M
       (M,M) if M > N
-    All new entries are set to 1e6 to discourage assignments by the algorithm
+    All new entries are set to 1e6 to discourage assignments by the algorithm.
     """
     N, M = matrix.shape[0], matrix.shape[1]
     if N > M:
@@ -72,13 +60,22 @@ class Matcher:
       matrix = torch.cat([matrix, torch.full((M-N, M), 1e6)], dim=0)
     return matrix
 
+
   @staticmethod
-  def _subtract_on_dimensions(H: torch.Tensor, dim: int):
+  def _subtract_on_dimensions(H: torch.Tensor, dim: int) -> torch.Tensor:
+    """
+    Subtracts the minimum value along the specified dimension from each element in that dimension.
+    """
     mins, _ = H.min(dim = dim, keepdim=True)
     return H - mins
 
+
   @staticmethod
   def _matrix_to_graph(H: torch.Tensor) -> Tuple[nx.Graph, Set]:
+    """
+    Converts a matrix into a bipartite graph where each row represents a left node, 
+    each column represents a right node, and edges exist only for matrix elements equal to zero.
+    """
     G = nx.Graph()
     row = set()
     for (i,j) in torch.nonzero(H == 0, as_tuple=False):
@@ -86,11 +83,16 @@ class Matcher:
       row.add(f"R{i}")
     return G, row
 
+
   @staticmethod
-  def _analyze_vertex_cover(dim:int, vertex_cover: Set[str]) -> Dict[str, torch.Tensor]:
-    row_uncovered = list(range(dim))
+  def _analyze_vertex_cover(dim_matrix:int, vertex_cover: Set) -> Dict:
+    """
+    Given a vertex cover represented as a list, constructs a dictionary that explicitly 
+    stores the covered and uncovered rows and columns for easy access and further processing.
+    """
+    row_uncovered = list(range(dim_matrix))
     row_covered = []
-    column_uncovered = list(range(dim))
+    column_uncovered = list(range(dim_matrix))
     column_covered = []
     for elem in vertex_cover:
       index = int(elem[1])
@@ -107,11 +109,20 @@ class Matcher:
       "column_covered" : torch.tensor(column_covered)
       }
 
+
   @staticmethod
   def _unique_matching(matching: Dict[str,str]) -> List[Tuple[str,str]]:
+    """
+    Tansforms a dictionary representing a maximum matching into a list of unique pairs, 
+    conrtaining all matches from tracks to detections without duplicates.
+    """
     return [(int(r[1]),int(c[1])) for r, c in matching.items() if r.startswith("R")]
 
   def _update_matrix_with_min_uncovered(self, H: torch.Tensor, vertex_cover: Set[str]) -> torch.Tensor:
+    """
+    Subtracts the minimum uncovered value from all uncovered rows and adds it to all covered columns.
+    Resets any negative values in the matrix to zero.
+    """
     # Calculate the minimum uncovered entry
     vc_dict = self._analyze_vertex_cover(H.shape[0], vertex_cover)
     sub_H = H.index_select(0, vc_dict["row_uncovered"]).index_select(1, vc_dict["column_uncovered"])
@@ -124,6 +135,9 @@ class Matcher:
     return H
 
   def _maximum_matching_minimum_vertex_cover(self, H: torch.Tensor) -> Tuple[Dict, Set]:
+    """
+    Computes the maximum matching and the minimum vertex cover of a bipartite graph.
+    """
     G, T = self._matrix_to_graph(H)
     matching = hopcroft_karp_matching(G, top_nodes=T)
     vertex_cover = to_vertex_cover(G, matching, top_nodes=T)
@@ -132,6 +146,10 @@ class Matcher:
 
   @staticmethod
   def _assign_detections_with_threshold(H: torch.Tensor, matching: List, original_dim: Tuple, threshold: int):
+    """
+    Processes the matching to produce track-detection pairs, lost tracks in the current frame,
+    and new detections. Also discards assignments involving auxiliary dimensions. 
+    """
     results = {
       "assignments" : [],
       "lost_tracks" : [],
@@ -148,7 +166,9 @@ class Matcher:
     return results
 
   def hungarian_algorithm(self, tracks: torch.Tensor, detections: torch.Tensor, threshold: int = THRESHOLD) -> Dict:
-       
+    """
+    Implements the Hungarian algorithm in 5 steps to solve the assignment problem.
+    """
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
 
@@ -161,17 +181,15 @@ class Matcher:
     # Step 3 -> Cross the 0's with the minimum number of lines needed (if N==#lines jump to 5)
     matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)
 
-    # Step 4 -> Find the smallest entry not covered by any line,
-    #           subtract this entry to the not covered row  and
-    #           add this entry to the covered collumn (jump to 3)
+    # Step 4 -> Subtract the smallest uncovered entry to uncovered row and add it to covered column
     while len(vertex_cover) < H.shape[0]:
       H_current = self._update_matrix_with_min_uncovered(H_current, vertex_cover)
       matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)    
     
-    # Step 5 -> Assign detections to tracks starting with the line with only one zero,
-    #           do not accept pairs with a cost greater than a threshold.
+    # Step 5 -> Assign detections to tracks, don't accept the pairs with high cost
     original_dim = (tracks.shape[0], detections.shape[0])
     results = self._assign_detections_with_threshold(H, matching, original_dim, threshold)
+
     return results
     
 

@@ -8,7 +8,7 @@ class Detector:
     
     def get_bounding_box(self, frame: np.ndarray):
       idx_person = self.model.names.index("person")
-      return self.model.predict(frame, classes = [idx_person],conf=0.25)
+      return self.model.predict(frame, classes = [idx_person], conf=0.25)
     
     def show_classes(self):
       print(self.model.names)
