@@ -1,5 +1,8 @@
 import torch
-from typing import List
+import networkx as nx
+from typing import Dict, Tuple, List, Set
+from networkx.algorithms.bipartite import hopcroft_karp_matching
+from networkx.algorithms.bipartite import to_vertex_cover
 
 class Matcher:
   """
@@ -73,12 +76,30 @@ class Matcher:
     mins, _ = H.min(dim = dim, keepdim=True)
     return H - mins
 
+  @staticmethod
+  def _matrix_to_graph(H: torch.Tensor) -> Tuple[nx.Graph, Set]:
+    G = nx.Graph()
+    T = set()
+    for (i,j) in torch.nonzero(H == 0, as_tuple=False):
+      G.add_edge(f"T{i}", f"D{j}")
+      T.add(f"T{i}")
+    return G, T
+
+
+  def _minimum_vertex_cover(self, H: torch.Tensor) -> Dict[str,List[int]]:
+    G, T = self._matrix_to_graph(H)
+    max_matching = hopcroft_karp_matching(G, top_nodes=T)
+    vertex_cover_set = to_vertex_cover(G, max_matching, top_nodes=T)
+    vertex_cover_dict = dict()
+    for pos in vertex_cover_set:
+      vertex_cover_dict.setdefault(pos[0], []).append(int(pos[1]))
+    return vertex_cover_dict
+
 
   def match_tracks_and_detections(self, tracks: torch.Tensor, detections: torch.Tensor):
 
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
-    print(H)
 
     # Step 1 -> Subtract from each row the minimum element in it
     H = self._subtract_on_dimensions(H, dim=1)
@@ -87,9 +108,14 @@ class Matcher:
     H = self._subtract_on_dimensions(H, dim=0)
 
     # Step 3 -> Cross the 0's with the minimum number of lines needed (if N==#lines jump to 5)
-    
+    vertex_cover = self._minimum_vertex_cover(H)
+
     # Step 4 -> Find the smallest entry not covered by any line
     #           and subtract this entry to the entire matrix except 0 (jump to 3)
+    # while len(vertex_cover) < H.shape[0]:
+    #   vertex_cover = self._minimum_vertex_cover(H)
+    print(vertex_cover)
+    
     
     # Step 5 -> Assign detections to tracks starting with the line with only one zero,
     #           do not accept pairs with a cost greater than a threshold.
