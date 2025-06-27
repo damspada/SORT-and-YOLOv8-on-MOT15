@@ -79,61 +79,82 @@ class Matcher:
   @staticmethod
   def _matrix_to_graph(H: torch.Tensor) -> Tuple[nx.Graph, Set]:
     G = nx.Graph()
-    T = set()
+    row = set()
     for (i,j) in torch.nonzero(H == 0, as_tuple=False):
-      G.add_edge(f"T{i}", f"D{j}")
-      T.add(f"T{i}")
-    return G, T
+      G.add_edge(f"R{i}", f"C{j}")
+      row.add(f"R{i}")
+    return G, row
 
   @staticmethod
-  def _subtract_minimum_entry_to_not_covered_elem(H: torch.Tensor, vc: Dict[str,List[int]]) -> torch.Tensor:
-    row = torch.tensor([t for t in range(H.shape[0]) if t not in vc["T"]])
-    column = torch.tensor([d for d in range(H.shape[1]) if d not in vc["D"]])
-    sub_H = H.index_select(0, row).index_select(1, column)
-    return sub_H.min()
+  def _analyze_vertex_cover(dim:int, vertex_cover: Set[str]) -> Dict[str, torch.Tensor]:
+    row_uncovered = list(range(dim))
+    row_covered = []
+    column_uncovered = list(range(dim))
+    column_covered = []
+    for elem in vertex_cover:
+      index = int(elem[1])
+      if elem[0] == "R":
+        row_uncovered.remove(index)
+        row_covered.append(index)
+      elif elem[0] == "C":
+        column_uncovered.remove(index)
+        column_covered.append(index)
+    return {
+      "row_uncovered": torch.tensor(row_uncovered),
+      "row_covered" : torch.tensor(row_covered),
+      "column_uncovered" : torch.tensor(column_uncovered),
+      "column_covered" : torch.tensor(column_covered)
+      }
 
   @staticmethod
-  def _add_entry_to_double_covered_elem(H: torch.Tensor, vc: Dict[str,List[int]], entry: int) -> torch.Tensor:
-    for i in vc["T"]:
-      for j in vc["D"]:
-        H[i,j] += entry
+  def _unique_matching(matching: Dict[str,str]) -> List[Tuple[str,str]]:
+    return [(int(r[1]),int(c[1])) for r, c in matching.items() if r.startswith("R")]
+
+  def _update_matrix_with_min_uncovered(self, H: torch.Tensor, vertex_cover: Set[str]) -> torch.Tensor:
+    # Calculate the minimum uncovered entry
+    vc_dict = self._analyze_vertex_cover(H.shape[0], vertex_cover)
+    sub_H = H.index_select(0, vc_dict["row_uncovered"]).index_select(1, vc_dict["column_uncovered"])
+    min_entry = sub_H.min()
+    # Update the Hungarian Matrix
+    H[vc_dict["row_uncovered"], :] -= min_entry
+    H[:, vc_dict["column_covered"]] += min_entry
+    # Trasform all negative number to zero
+    H = H = torch.clamp(H, min=0)
     return H
 
-  def _minimum_vertex_cover(self, H: torch.Tensor) -> Dict[str,List[int]]:
+  def _maximum_matching_minimum_vertex_cover(self, H: torch.Tensor) -> Tuple[Dict[str,str], Set[str]]:
     G, T = self._matrix_to_graph(H)
-    max_matching = hopcroft_karp_matching(G, top_nodes=T)
-    vertex_cover_set = to_vertex_cover(G, max_matching, top_nodes=T)
-    vertex_cover_dict = dict()
-    for pos in vertex_cover_set:
-      vertex_cover_dict.setdefault(pos[0], []).append(int(pos[1]))
-    return vertex_cover_dict
+    matching = hopcroft_karp_matching(G, top_nodes=T)
+    vertex_cover = to_vertex_cover(G, matching, top_nodes=T)
+    return self._unique_matching(matching), vertex_cover
 
+  def _match_tracks_and_detections():
+    return
 
-  def match_tracks_and_detections(self, tracks: torch.Tensor, detections: torch.Tensor):
+  def hungarian_algorithm(self, tracks: torch.Tensor, detections: torch.Tensor):
 
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
 
     # Step 1 -> Subtract from each row the minimum element in it
-    H = self._subtract_on_dimensions(H, dim=1)
+    H_current = self._subtract_on_dimensions(H, dim=1)
 
     # Step 2 -> Subtract from each column the minimum element in it
-    H = self._subtract_on_dimensions(H, dim=0)
+    H_current = self._subtract_on_dimensions(H_current, dim=0)
 
     # Step 3 -> Cross the 0's with the minimum number of lines needed (if N==#lines jump to 5)
-    vertex_cover = self._minimum_vertex_cover(H)
+    matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)
 
     # Step 4 -> Find the smallest entry not covered by any line,
-    #           subtract this entry to the not covered elements and
-    #           add the entry to the elements have been covered by any line twice (jump to 3)
+    #           subtract this entry to the not covered row  and
+    #           add this entry to the covered collumn (jump to 3)
     while len(vertex_cover) < H.shape[0]:
-      min_entry = self._minimum_entry_not_covered(H, vertex_cover)
-      H = self._add_entry_to_double_covered_elem(H, vertex_cover, min_entry.item())
-      H = torch.clamp(H - min_entry, min=0) # WRONG, only remove the uncovered items
-      vertex_cover = self._minimum_vertex_cover(H)    
+      H_current = self._update_matrix_with_min_uncovered(H_current, vertex_cover)
+      matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)    
     
     # Step 5 -> Assign detections to tracks starting with the line with only one zero,
     #           do not accept pairs with a cost greater than a threshold.
+    
 
     return H
     
