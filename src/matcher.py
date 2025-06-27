@@ -1,7 +1,7 @@
 import torch
 import networkx as nx
 from typing import Dict, Tuple, List, Set
-from config.variables import THRESHOLD
+from variables import THRESHOLD
 from networkx.algorithms.bipartite import hopcroft_karp_matching
 from networkx.algorithms.bipartite import to_vertex_cover
 
@@ -131,7 +131,7 @@ class Matcher:
     return matching, vertex_cover
 
   @staticmethod
-  def _assign_detections_with_threshold(H: torch.Tensor, matching: List, threshold: int):
+  def _assign_detections_with_threshold(H: torch.Tensor, matching: List, original_dim: Tuple, threshold: int):
     results = {
       "assignments" : [],
       "lost_tracks" : [],
@@ -141,13 +141,14 @@ class Matcher:
       if H[r,c] <= threshold:
         results["assignments"].append((r, c))
       else:
-        results["lost_tracks"].append(r)
-        results["new_detections"].append(c)
+        if r < original_dim[0]:
+          results["lost_tracks"].append(r)
+        if c < original_dim[1]:
+          results["new_detections"].append(c)
     return results
 
   def hungarian_algorithm(self, tracks: torch.Tensor, detections: torch.Tensor, threshold: int = THRESHOLD) -> Dict:
-    print(type(THRESHOLD))
-    
+       
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
 
@@ -169,7 +170,9 @@ class Matcher:
     
     # Step 5 -> Assign detections to tracks starting with the line with only one zero,
     #           do not accept pairs with a cost greater than a threshold.
-    return self._assign_detections_with_threshold(H, matching, threshold)
+    original_dim = (tracks.shape[0], detections.shape[0])
+    results = self._assign_detections_with_threshold(H, matching, original_dim, threshold)
+    return results
     
 
 
