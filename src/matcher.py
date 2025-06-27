@@ -146,7 +146,8 @@ class Matcher:
     return results
 
   def hungarian_algorithm(self, tracks: torch.Tensor, detections: torch.Tensor, threshold: int = THRESHOLD) -> Dict:
-
+    print(type(THRESHOLD))
+    
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
 
