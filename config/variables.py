@@ -1,1 +1,1 @@
-FOLDER_PATH = ""
+THRESHOLD = 0,70
