@@ -85,6 +85,19 @@ class Matcher:
       T.add(f"T{i}")
     return G, T
 
+  @staticmethod
+  def _subtract_minimum_entry_to_not_covered_elem(H: torch.Tensor, vc: Dict[str,List[int]]) -> torch.Tensor:
+    row = torch.tensor([t for t in range(H.shape[0]) if t not in vc["T"]])
+    column = torch.tensor([d for d in range(H.shape[1]) if d not in vc["D"]])
+    sub_H = H.index_select(0, row).index_select(1, column)
+    return sub_H.min()
+
+  @staticmethod
+  def _add_entry_to_double_covered_elem(H: torch.Tensor, vc: Dict[str,List[int]], entry: int) -> torch.Tensor:
+    for i in vc["T"]:
+      for j in vc["D"]:
+        H[i,j] += entry
+    return H
 
   def _minimum_vertex_cover(self, H: torch.Tensor) -> Dict[str,List[int]]:
     G, T = self._matrix_to_graph(H)
@@ -110,12 +123,14 @@ class Matcher:
     # Step 3 -> Cross the 0's with the minimum number of lines needed (if N==#lines jump to 5)
     vertex_cover = self._minimum_vertex_cover(H)
 
-    # Step 4 -> Find the smallest entry not covered by any line
-    #           and subtract this entry to the entire matrix except 0 (jump to 3)
-    # while len(vertex_cover) < H.shape[0]:
-    #   vertex_cover = self._minimum_vertex_cover(H)
-    print(vertex_cover)
-    
+    # Step 4 -> Find the smallest entry not covered by any line,
+    #           subtract this entry to the not covered elements and
+    #           add the entry to the elements have been covered by any line twice (jump to 3)
+    while len(vertex_cover) < H.shape[0]:
+      min_entry = self._minimum_entry_not_covered(H, vertex_cover)
+      H = self._add_entry_to_double_covered_elem(H, vertex_cover, min_entry.item())
+      H = torch.clamp(H - min_entry, min=0) # WRONG, only remove the uncovered items
+      vertex_cover = self._minimum_vertex_cover(H)    
     
     # Step 5 -> Assign detections to tracks starting with the line with only one zero,
     #           do not accept pairs with a cost greater than a threshold.
