@@ -1,7 +1,7 @@
 import torch
 from src.track import Track
 
-class Prediction:
+class Predictor:
   """
   The prediction is done with the Kalman Filter algorithm
   """

@@ -22,14 +22,14 @@ class SORTTrackers:
   def __init__(self):
     self.all_tracks = []
 
-  @staticmethod
-  def _xyxy_to_xywh(boxes: torch.Tensor) -> torch.Tensor:
-    """
-    Trasform a matrix (N,4) [x1,y1,x2,y2] in a matrix (N,4) [cx,cy,w,h]
-    """
-    WH = boxes[:, 2:] - boxes[:, :2]
-    XY_c = boxes[:, :2] + WH / 2
-    return torch.cat((XY_c, WH), dim=1) 
+  # @staticmethod
+  # def _xyxy_to_xywh(boxes: torch.Tensor) -> torch.Tensor:
+  #   """
+  #   Trasform a matrix (N,4) [x1,y1,x2,y2] in a matrix (N,4) [cx,cy,w,h]
+  #   """
+  #   WH = boxes[:, 2:] - boxes[:, :2]
+  #   XY_c = boxes[:, :2] + WH / 2
+  #   return torch.cat((XY_c, WH), dim=1) 
 
   @staticmethod
   def _xywh_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
