@@ -46,8 +46,8 @@ class SORTTrackers:
     """
     track_matrix = torch.empty((0,4))
     for track in tracks:
-      track_xywh = track.X_hat[:4]
-      track_matrix = torch.cat((track_matrix, track_xywh), dim=1)
+      track_xywh = track.X_hat.T[:, :4]
+      track_matrix = torch.cat((track_matrix, track_xywh), dim=0)
 
     return self._xywh_to_xyxy(track_matrix)
 
@@ -61,18 +61,18 @@ class SORTTrackers:
 
     for frame in videoManager:
       #-Detection
-      results = detector.get_detection_results(frame)
+      results = detector.get_detection_results(frame)[0]
       detections_xyxy = results.boxes.xyxy
       detections_xywh = results.boxes.xywh
 
       #-Matching
       tracks_xyxy = self._tracks_to_matrix_xyxy(self.all_tracks)
       matching = matcher.hungarian_algorithm(tracks_xyxy, detections_xyxy)
-      
+
       #-Prediction
       for pair in matching["assignments"]:
         track_to_udpdate = self.all_tracks[pair[0]]
-        new_measures = detections_xywh[pair[1], :]
+        new_measures = detections_xywh[pair[1], :].unsqueeze(1)
         predictor.prediction_step(track_to_udpdate)
         predictor.estimated_step(track_to_udpdate, new_measures)
       
@@ -81,7 +81,7 @@ class SORTTrackers:
         track_to_predict = self.all_tracks[index]
         to_delect = track_to_predict.increse_detections_missed()
         if to_delect:
-          tracks_to_delete.append[index]
+          tracks_to_delete.append(index)
         else:
           predictor.prediction_step(track_to_predict)
       
@@ -90,7 +90,8 @@ class SORTTrackers:
         del self.all_tracks[index]
 
       for index in matching["new_detections"]:
-        new_track = Track(detections_xywh[index, :])
+        X0 = detections_xywh[index:index+1]
+        new_track = Track(X0)
         self.all_tracks.append(new_track)
       
       #-Visualizer

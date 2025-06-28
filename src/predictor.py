@@ -43,22 +43,22 @@ class Predictor:
       [0, 0, 0, 1]
     ], dtype=torch.float32) 
 
-    def prediction_step(self, track: Track):
-      """
-      Estimate the bounding box of a track based on information from the previous iteration.
-      """
-      track.X_hat = self.A @ track.X_hat
-      track.P = self.A @ track.P @ self.A.T + self.Q
-      # return track.X_hat
-   
-    def estimated_step(self, track:Track, Z: torch.Tensor):
-      """
-      Use the data provided by the detector to accurately update the bounding box.
-      """
-      K = track.P @ self.H.T @ torch.inverse(self.H @ track.P @ self.H.T + self.R)
-      track.X_hat = track.X_hat + K @ (Z - self.H @ track.X_hat)
-      track.P = track.P - K @ self.H @ track.P
-      # return track.X_hat
+  def prediction_step(self, track: Track):
+    """
+    Estimate the bounding box of a track based on information from the previous iteration.
+    """
+    track.X_hat = self.A @ track.X_hat
+    track.P = self.A @ track.P @ self.A.T + self.Q
+    # return track.X_hat
+  
+  def estimated_step(self, track:Track, Z: torch.Tensor):
+    """
+    Use the data provided by the detector to accurately update the bounding box.
+    """
+    K = track.P @ self.H.T @ torch.inverse(self.H @ track.P @ self.H.T + self.R)
+    track.X_hat = track.X_hat + K @ (Z - self.H @ track.X_hat)
+    track.P = track.P - K @ self.H @ track.P
+    # return track.X_hat
 
 
 

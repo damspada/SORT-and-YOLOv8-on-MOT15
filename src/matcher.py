@@ -94,7 +94,7 @@ class Matcher:
     column_uncovered = list(range(dim_matrix))
     column_covered = []
     for elem in vertex_cover:
-      index = int(elem[1])
+      index = int(elem[1:])
       if elem[0] == "R":
         row_uncovered.remove(index)
         row_covered.append(index)
@@ -149,7 +149,7 @@ class Matcher:
     Processes the matching to produce track-detection pairs, lost tracks in the current frame,
     and new detections. Also discards assignments involving auxiliary dimensions. 
     """
-    results = { #---ENUM CLASS?---
+    results = {
       "assignments" : [],
       "lost_tracks" : [],
       "new_detections" : []

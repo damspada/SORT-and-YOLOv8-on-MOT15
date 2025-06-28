@@ -7,8 +7,8 @@ class Track:
     """
     X0 is of the form [x,y,w,h]
     """
-    self.id = _id_counter
-    _id_counter += 1
+    self.id = Track._id_counter
+    Track._id_counter += 1
 
     self.detections_missed = 0
 
@@ -22,11 +22,11 @@ class Track:
       [0, 0, 0, 4,  0,   0],
       [0, 0, 0, 0, 900,  0],
       [0, 0, 0, 0,  0,  900]
-    ])
+    ], dtype=torch.float32)
 
-    def increse_detections_missed(self):
-      self.detections_missed += 1
-      return self.detections_missed >= MAX_FRAME_LOST
+  def increse_detections_missed(self):
+    self.detections_missed += 1
+    return self.detections_missed >= MAX_FRAME_LOST
 
 
 
