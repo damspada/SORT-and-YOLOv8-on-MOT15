@@ -1,10 +1,12 @@
 import torch
-
+from variables import MAX_FRAME_LOST
 class Track:
   _id_counter = 0
 
   def __init__(self, X0: torch.Tensor):
-
+    """
+    X0 is of the form [x,y,w,h]
+    """
     self.id = _id_counter
     _id_counter += 1
 
@@ -21,3 +23,10 @@ class Track:
       [0, 0, 0, 0, 900,  0],
       [0, 0, 0, 0,  0,  900]
     ])
+
+    def increse_detections_missed(self):
+      self.detections_missed += 1
+      return self.detections_missed >= MAX_FRAME_LOST
+
+
+

@@ -7,7 +7,7 @@ from networkx.algorithms.bipartite import to_vertex_cover
 
 class Matcher:
   """
-  The matching is done with the Hungarian algorithm and the IoU metric
+  The matching is done with the Hungarian algorithm and the IoU metric.
   """
 
   @staticmethod
@@ -149,7 +149,7 @@ class Matcher:
     Processes the matching to produce track-detection pairs, lost tracks in the current frame,
     and new detections. Also discards assignments involving auxiliary dimensions. 
     """
-    results = {
+    results = { #---ENUM CLASS?---
       "assignments" : [],
       "lost_tracks" : [],
       "new_detections" : []
@@ -167,6 +167,7 @@ class Matcher:
   def hungarian_algorithm(self, tracks: torch.Tensor, detections: torch.Tensor, threshold: int = THRESHOLD) -> Dict:
     """
     Implements the Hungarian algorithm in 5 steps to solve the assignment problem.
+    Tracks and detections must be in the form [x1,y1,x2,y2]
     """
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     H = self._rectangle_to_square(self._IoU_matrix(tracks, detections))
