@@ -11,7 +11,7 @@ class Track:
     self.detections_missed = 0
 
     V0 = torch.tensor([[1,1]], dtype=torch.float32)
-    self.X_hat = torch.cat((X0, V0), dim=1).T
+    self.X_hat = torch.cat((X0, V0), dim=1).T #[x,y,w,h,vx,vy]
 
     self.P = torch.tensor([
       [9, 0, 0, 0,  0,   0],

@@ -10,7 +10,6 @@ class Matcher:
   The matching is done with the Hungarian algorithm and the IoU metric
   """
 
-
   @staticmethod
   def _IoU_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> torch.Tensor:
     """
