@@ -94,15 +94,7 @@ class SORTTrackers:
         new_track = Track(X0)
         self.all_tracks.append(new_track)
       
-      #-Visualizer
+      # visualizer.draw(frame, self.all_tracks)
 
       
      
-
-
-
-
-
-
-
-
