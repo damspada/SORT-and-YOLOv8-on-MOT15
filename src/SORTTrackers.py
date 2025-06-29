@@ -40,29 +40,31 @@ class SORTTrackers:
     XY_2 = boxes[:, :2] + (boxes[:, 2:] / 2)
     return torch.cat((XY_1, XY_2), dim=1) 
 
-  def _tracks_to_matrix_xyxy(self, tracks: List[Track], produce_id:bool = False) -> torch.Tensor:
+  def _tracks_to_matrix_xyxy(self, tracks: List[Track], produce_id: bool = False) -> torch.Tensor:
     """
-    if produce_id == False:
-      Produces a matrix (N,4) with the boxes of all tracks in the form [x,y,x,y]
-    else:
-      Produces a matrix (N,5) with the id and boxes of all tracks in the form [id,x,y,x,y]
+    Converts a list of tracks into a (N,4) or (N,5) tensor of boxes in [x1, y1, x2, y2] format.
+    If produce_id is True, includes the track ID as first column.
     """
-    track_boxes = torch.empty((0, 4))
-    if produce_id:
-      all_ids = torch.empty((0, 1))
+    box_list = []
+    id_list = []
+
     for track in tracks:
-      track_xywh = track.X_hat.T[:, :4]
-      track_boxes = torch.cat((track_boxes, track_xywh), dim=0)
-      if produce_id:
-        track_id = torch.tensor([[track.identifier]])
-        all_ids = torch.cat((all_ids, track_id), dim=0)
+        track_xywh = track.X_hat.T[:, :4]
+        box_list.append(track_xywh)
+        if produce_id:
+            track_id = torch.tensor([[track.identifier]], dtype=torch.float32, device=track_xywh.device)
+            id_list.append(track_id)
 
-    track_xywh = self._xywh_to_xyxy(track_boxes)
+    if not box_list:
+        return torch.empty((0, 5 if produce_id else 4))
 
+    boxes = torch.cat(box_list, dim=0)
+    boxes_xyxy = self._xywh_to_xyxy(boxes)
     if produce_id:
-      return torch.cat((all_ids, track_xywh), dim=1)
+        ids = torch.cat(id_list, dim=0)
+        return torch.cat((ids, boxes_xyxy), dim=1)
     else:
-      return track_xywh
+        return boxes_xyxy
   
 
   def run_tracking(self, video_path= VIDEO_PATH_TEST):
