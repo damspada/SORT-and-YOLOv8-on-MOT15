@@ -186,7 +186,6 @@ class Matcher:
       H_current = self._update_matrix_with_min_uncovered(H_current, vertex_cover)
       matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)    
     
-    print("MATCHING HUNGARIAN ALGOTITHM ->", matching)
     # Step 5 -> Assign detections to tracks, don't accept the pairs with high cost
     original_dim = (tracks.shape[0], detections.shape[0])
     results = self._assign_detections_with_threshold(H, matching, original_dim, threshold)

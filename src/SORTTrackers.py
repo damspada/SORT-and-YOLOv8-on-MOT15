@@ -90,7 +90,6 @@ class SORTTrackers:
       #-Matching
       tracks_xyxy = self._tracks_to_matrix_xyxy(self.all_tracks)
       matching = matcher.hungarian_algorithm(tracks_xyxy, detections_xyxy)
-      print("MATCHING ->\n", matching)
 
       #-Prediction
       for pair in matching["assignments"]:
