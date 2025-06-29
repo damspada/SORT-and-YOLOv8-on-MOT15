@@ -7,7 +7,7 @@ class Track:
     """
     X0 is of the form [x,y,w,h]
     """
-    self.id = Track._id_counter
+    self.identifier = Track._id_counter
     Track._id_counter += 1
 
     self.detections_missed = 0

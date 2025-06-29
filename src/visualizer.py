@@ -1,2 +1,2 @@
 class Visualizer:
-    pass
+  pass

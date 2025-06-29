@@ -9,7 +9,7 @@ from detector import Detector
 from matcher import Matcher
 from predictor import Predictor
 from track import Track
-# from visualizer import Visualizer
+from visualizer import Visualizer
 
 class SORTTrackers:
   """
@@ -40,16 +40,30 @@ class SORTTrackers:
     XY_2 = boxes[:, :2] + (boxes[:, 2:] / 2)
     return torch.cat((XY_1, XY_2), dim=1) 
 
-  def _tracks_to_matrix_xyxy(self, tracks: List[Track]) -> torch.Tensor:
+  def _tracks_to_matrix_xyxy(self, tracks: List[Track], produce_id:bool = False) -> torch.Tensor:
     """
-    Produces a matrix (N,4) with the boxes of all tracks in the form [x,y,x,y]
+    if produce_id == False:
+      Produces a matrix (N,4) with the boxes of all tracks in the form [x,y,x,y]
+    else:
+      Produces a matrix (N,5) with the id and boxes of all tracks in the form [id,x,y,x,y]
     """
-    track_matrix = torch.empty((0,4))
+    track_boxes = torch.empty((0, 4))
+    if produce_id:
+      all_ids = torch.empty((0, 1))
     for track in tracks:
       track_xywh = track.X_hat.T[:, :4]
-      track_matrix = torch.cat((track_matrix, track_xywh), dim=0)
+      track_boxes = torch.cat((track_boxes, track_xywh), dim=0)
+      if produce_id:
+        track_id = torch.tensor([[track.identifier]])
+        all_ids = torch.cat((all_ids, track_id), dim=0)
 
-    return self._xywh_to_xyxy(track_matrix)
+    track_xywh = self._xywh_to_xyxy(track_boxes)
+
+    if produce_id:
+      return torch.cat((all_ids, track_xywh), dim=1)
+    else:
+      return track_xywh
+  
 
   def run_tracking(self, video_path= VIDEO_PATH_TEST):
 
@@ -57,7 +71,7 @@ class SORTTrackers:
     detector = Detector()
     matcher = Matcher()
     predictor = Predictor(videoManager.dt)
-    # visualizer = Visualizer()
+    visualizer = Visualizer(save_video=False, dt=videoManager.dt)
 
     for frame in videoManager:
       #-Detection
@@ -94,7 +108,9 @@ class SORTTrackers:
         new_track = Track(X0)
         self.all_tracks.append(new_track)
       
-      # visualizer.draw(frame, self.all_tracks)
+      #-Visualizer
+      printing_matrix = self._tracks_to_matrix_xyxy(self.all_tracks, produce_id=True)
+      visualizer.draw(frame, printing_matrix)
 
       
      
