@@ -4,12 +4,12 @@ from typing import List
 from variables import VIDEO_PATH_TEST
 from variables import MAX_FRAME_LOST
 
-from videoManager import VideoManager
-from detector import Detector
-from matcher import Matcher
-from predictor import Predictor
-from track import Track
-from visualizer import Visualizer
+from src.videoManager import VideoManager
+from src.detector import Detector
+from src.matcher import Matcher
+from src.predictor import Predictor
+from src.track import Track
+from src.visualizer import Visualizer
 
 class SORTTrackers:
   """
