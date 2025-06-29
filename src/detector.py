@@ -20,7 +20,7 @@ class Detector:
 
     def get_detection_results(self, frame: np.ndarray) -> Results:
       idx_classes = self._classes_to_index(["person"])
-      return self.model.predict(frame, classes = idx_classes, conf=MIN_CONF, verbose=True)
+      return self.model.predict(frame, classes = idx_classes, conf=MIN_CONF, verbose=False)
     
     def show_classes(self):
       print(self.model.names)

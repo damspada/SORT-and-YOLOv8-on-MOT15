@@ -115,7 +115,7 @@ class Matcher:
     Tansforms a dictionary representing a maximum matching into a list of unique pairs, 
     conrtaining all matches from tracks to detections without duplicates.
     """
-    return [(int(r[1]),int(c[1])) for r, c in matching.items() if r.startswith("R")]
+    return [(int(r[1:]),int(c[1:])) for r, c in matching.items() if r.startswith("R")]
 
   def _update_matrix_with_min_uncovered(self, H: torch.Tensor, vertex_cover: Set[str]) -> torch.Tensor:
     """
@@ -186,6 +186,7 @@ class Matcher:
       H_current = self._update_matrix_with_min_uncovered(H_current, vertex_cover)
       matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)    
     
+    print("MATCHING HUNGARIAN ALGOTITHM ->", matching)
     # Step 5 -> Assign detections to tracks, don't accept the pairs with high cost
     original_dim = (tracks.shape[0], detections.shape[0])
     results = self._assign_detections_with_threshold(H, matching, original_dim, threshold)

@@ -74,8 +74,14 @@ class SORTTrackers:
     matcher = Matcher()
     predictor = Predictor(videoManager.dt)
     visualizer = Visualizer(save_video=False, dt=videoManager.dt)
+    n_frame = 0
 
     for frame in videoManager:
+      #-Stat
+      print("Analyzing frame number -> ", n_frame)
+      print("Elements in traks -> ", len(self.all_tracks))
+      n_frame += 1
+
       #-Detection
       results = detector.get_detection_results(frame)[0]
       detections_xyxy = results.boxes.xyxy
@@ -84,6 +90,7 @@ class SORTTrackers:
       #-Matching
       tracks_xyxy = self._tracks_to_matrix_xyxy(self.all_tracks)
       matching = matcher.hungarian_algorithm(tracks_xyxy, detections_xyxy)
+      print("MATCHING ->\n", matching)
 
       #-Prediction
       for pair in matching["assignments"]:
