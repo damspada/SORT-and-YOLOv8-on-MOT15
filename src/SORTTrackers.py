@@ -49,22 +49,22 @@ class SORTTrackers:
     id_list = []
 
     for track in tracks:
-        track_xywh = track.X_hat.T[:, :4]
-        box_list.append(track_xywh)
-        if produce_id:
-            track_id = torch.tensor([[track.identifier]], dtype=torch.float32, device=track_xywh.device)
-            id_list.append(track_id)
+      track_xywh = track.X_hat.T[:, :4]
+      box_list.append(track_xywh)
+      if produce_id:
+        track_id = torch.tensor([[track.identifier]], dtype=torch.float32, device=track_xywh.device)
+        id_list.append(track_id)
 
     if not box_list:
-        return torch.empty((0, 5 if produce_id else 4))
+      return torch.empty((0, 5 if produce_id else 4))
 
     boxes = torch.cat(box_list, dim=0)
     boxes_xyxy = self._xywh_to_xyxy(boxes)
     if produce_id:
-        ids = torch.cat(id_list, dim=0)
-        return torch.cat((ids, boxes_xyxy), dim=1)
+      ids = torch.cat(id_list, dim=0)
+      return torch.cat((ids, boxes_xyxy), dim=1)
     else:
-        return boxes_xyxy
+      return boxes_xyxy
   
 
   def run_tracking(self, video_path= VIDEO_PATH_TEST):
