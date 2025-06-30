@@ -11,7 +11,8 @@ class VideoManager:
   """
     
   def __init__(self, video_path):
-    """ 
+    """
+    self.file_name: str
     self.dt: float
     self._MAX_FRAME: int
     self._frame_paths: List[str]
@@ -39,7 +40,8 @@ class VideoManager:
     config.read(seqinfo_path)
     frame_rate = int(config['Sequence']['frameRate'])
     self.dt = 1.0 / frame_rate
-    self._MAX_FRAME = int(config['Sequence']['seqLength' ])
+    self._MAX_FRAME = int(config['Sequence']['seqLength'])
+    self.file_name = config['Sequence']['name']
     return config['Sequence']['imExt']
 
   def _load_frames(self, video_path, img_ext):

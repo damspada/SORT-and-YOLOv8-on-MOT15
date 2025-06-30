@@ -1,9 +1,6 @@
 import torch
 from typing import List
 
-from variables import VIDEO_PATH_TEST
-from variables import MAX_FRAME_LOST
-
 from src.videoManager import VideoManager
 from src.detector import Detector
 from src.matcher import Matcher
@@ -67,19 +64,22 @@ class SORTTrackers:
       return boxes_xyxy
   
 
-  def run_tracking(self, video_path= VIDEO_PATH_TEST):
+  def run_tracking(self, input_path, output_path= None):
 
-    videoManager = VideoManager(video_path)
+    videoManager = VideoManager(input_path)
     detector = Detector()
     matcher = Matcher()
     predictor = Predictor(videoManager.dt)
-    visualizer = Visualizer(save_video=False, dt=videoManager.dt)
+    visualizer = Visualizer(
+      output_path = output_path,
+      file_name = videoManager.file_name,
+      dt = videoManager.dt
+    )
     n_frame = 0
 
     for frame in videoManager:
       #-Stat
       print("Analyzing frame number -> ", n_frame)
-      print("Elements in traks -> ", len(self.all_tracks))
       n_frame += 1
 
       #-Detection

@@ -1,6 +1,11 @@
-VIDEO_PATH_TEST = "/content/MOT15/test/Venice-1"
+INPUT_COLAB = "/content/MOT15/test/Venice-1"
+OUTPUT_COLAB = "/content/SORT_output/"
+INPUT_LOCAL = "C:/Users/matte/Desktop/SORT/MOT15/test/Venice-1"
+OUTPUT_LOCAL = "C:/Users/matte/Desktop/SORT_output/"
+
 SEQ_INFO = "seqinfo.ini"
-MAX_FRAME_LOST = 3
+YOLO_VERSION = "yolov8n.pt"
+
+MAX_FRAME_LOST = 6
 THRESHOLD = 0.7
 MIN_CONF = 0.25
-YOLO_VERSION = "yolov8n.pt"
