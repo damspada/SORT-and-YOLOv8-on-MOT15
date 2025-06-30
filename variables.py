@@ -1,7 +1,7 @@
 INPUT_COLAB = "/content/MOT15/test/Venice-1"
 OUTPUT_COLAB = "/content/SORT_output/"
 INPUT_LOCAL = "C:/Users/matte/Desktop/SORT/MOT15/test/Venice-1"
-OUTPUT_LOCAL = "C:/Users/matte/Desktop/SORT_output/"
+OUTPUT_LOCAL = "C:/Users/matte/Desktop/SORT/output/"
 
 SEQ_INFO = "seqinfo.ini"
 YOLO_VERSION = "yolov8n.pt"
