@@ -1,9 +1,10 @@
 import torch
-import networkx as nx
 from typing import Dict, Tuple, List, Set
-from variables import THRESHOLD
+import networkx as nx
 from networkx.algorithms.bipartite import hopcroft_karp_matching
 from networkx.algorithms.bipartite import to_vertex_cover
+
+from variables import THRESHOLD
 
 class Matcher:
   """

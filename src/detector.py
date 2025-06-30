@@ -1,7 +1,7 @@
 import numpy as np
+from typing import List
 from ultralytics import YOLO
 from ultralytics.engine.model import Results
-from typing import List
 
 from variables import YOLO_VERSION
 from variables import MIN_CONF

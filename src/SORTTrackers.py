@@ -1,12 +1,12 @@
 import torch
 from typing import List
 
-from src.videoManager import VideoManager
-from src.detector import Detector
-from src.matcher import Matcher
-from src.predictor import Predictor
-from src.track import Track
-from src.visualizer import Visualizer
+from videoManager import VideoManager
+from detector import Detector
+from matcher import Matcher
+from predictor import Predictor
+from track import Track
+from visualizer import Visualizer
 
 class SORTTrackers:
   """

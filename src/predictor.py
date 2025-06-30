@@ -1,5 +1,5 @@
 import torch
-from src.track import Track
+from track import Track
 
 class Predictor:
   """

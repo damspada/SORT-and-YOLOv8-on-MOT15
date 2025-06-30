@@ -1,5 +1,6 @@
 import torch
 from variables import MAX_FRAME_LOST
+
 class Track:
   _id_counter = 0
 
