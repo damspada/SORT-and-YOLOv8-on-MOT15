@@ -6,6 +6,6 @@ OUTPUT_LOCAL = "C:/Users/matte/Desktop/SORT/output/"
 SEQ_INFO = "seqinfo.ini"
 YOLO_VERSION = "yolov8n.pt"
 
-MAX_FRAME_LOST = 6
-THRESHOLD = 0.7
-MIN_CONF = 0.25
+MAX_FRAME_LOST = 8
+THRESHOLD = 0.5
+MIN_CONF = 0.35
