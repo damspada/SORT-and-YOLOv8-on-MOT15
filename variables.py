@@ -1,6 +1,7 @@
 INPUT_COLAB = "/content/MOT15/test/Venice-1"
 OUTPUT_COLAB = "/content/SORT_output/"
-INPUT_LOCAL = "C:/Users/matte/Desktop/SORT/MOT15/test/Venice-1"
+
+INPUT_LOCAL = "C:/Users/matte/Desktop/SORT/MOT15/Venice-1"
 OUTPUT_LOCAL = "C:/Users/matte/Desktop/SORT/output/"
 
 SEQ_INFO = "seqinfo.ini"

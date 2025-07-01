@@ -87,15 +87,17 @@ class SORTTrackers:
       detections_xyxy = results.boxes.xyxy
       detections_xywh = results.boxes.xywh
 
+      #-Prediction before matching
+      predictor.prediction_step(self.all_tracks)
+
       #-Matching
       tracks_xyxy = self._tracks_to_matrix_xyxy(self.all_tracks)
       matching = matcher.hungarian_algorithm(tracks_xyxy, detections_xyxy)
 
-      #-Prediction
+      #-Prediction after matching
       for pair in matching["assignments"]:
         track_to_udpdate = self.all_tracks[pair[0]]
         new_measures = detections_xywh[pair[1], :].unsqueeze(1)
-        predictor.prediction_step(track_to_udpdate)
         predictor.estimated_step(track_to_udpdate, new_measures)
       
       tracks_to_delete = []
