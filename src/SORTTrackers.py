@@ -7,6 +7,8 @@ from src.matcher import Matcher
 from src.predictor import Predictor
 from src.track import Track
 from src.visualizer import Visualizer
+from src.matrixUtils import MatrixUtils
+from src.metrics import MetricType
 
 class SORTTrackers:
   """
@@ -17,55 +19,9 @@ class SORTTrackers:
   """
 
   def __init__(self):
-    self.all_tracks = []
+    self.all_tracks = []  
 
-  # @staticmethod
-  # def _xyxy_to_xywh(boxes: torch.Tensor) -> torch.Tensor:
-  #   """
-  #   Trasform a matrix (N,4) [x1,y1,x2,y2] in a matrix (N,4) [cx,cy,w,h]
-  #   """
-  #   WH = boxes[:, 2:] - boxes[:, :2]
-  #   XY_c = boxes[:, :2] + WH / 2
-  #   return torch.cat((XY_c, WH), dim=1) 
-
-  @staticmethod
-  def _xywh_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
-    """
-    Trasform a matrix (N,4) [cx,cy,w,h] in a matrix (N,4) [x1,y1,x2,y2]
-    """
-    XY_1 = boxes[:, :2] - (boxes[:, 2:] / 2)
-    XY_2 = boxes[:, :2] + (boxes[:, 2:] / 2)
-    return torch.cat((XY_1, XY_2), dim=1) 
-
-  def _tracks_to_matrix_xyxy(self, tracks: List[Track], produce_id: bool = False) -> torch.Tensor:
-    """
-    Converts a list of tracks into a (N,4) or (N,5) tensor of boxes in [x1, y1, x2, y2] format.
-    If produce_id is True, includes the track ID as first column.
-    """
-    box_list = []
-    id_list = []
-
-    for track in tracks:
-      track_xywh = track.X_hat.T[:, :4]
-      box_list.append(track_xywh)
-      if produce_id:
-        track_id = torch.tensor([[track.identifier]], dtype=torch.float32, device=track_xywh.device)
-        id_list.append(track_id)
-
-    if not box_list:
-      return torch.empty((0, 5 if produce_id else 4))
-
-    boxes = torch.cat(box_list, dim=0)
-    boxes_xyxy = self._xywh_to_xyxy(boxes)
-    if produce_id:
-      ids = torch.cat(id_list, dim=0)
-      return torch.cat((ids, boxes_xyxy), dim=1)
-    else:
-      return boxes_xyxy
-  
-
-  def run_tracking(self, input_path, output_path= None):
-
+  def run_tracking(self, input_path, output_path=None):
     videoManager = VideoManager(input_path)
     detector = Detector()
     matcher = Matcher()
@@ -84,15 +40,14 @@ class SORTTrackers:
 
       #-Detection
       results = detector.get_detection_results(frame)[0]
-      detections_xyxy = results.boxes.xyxy
-      detections_xywh = results.boxes.xywh
+      detections = results.boxes
+      detections_xywh = detections.xywh
 
       #-Prediction before matching
       predictor.prediction_step(self.all_tracks)
 
       #-Matching
-      tracks_xyxy = self._tracks_to_matrix_xyxy(self.all_tracks)
-      matching = matcher.hungarian_algorithm(tracks_xyxy, detections_xyxy)
+      matching = matcher.hungarian_algorithm(self.all_tracks, detections, MetricType.IoU)
 
       #-Prediction after matching
       for pair in matching["assignments"]:
