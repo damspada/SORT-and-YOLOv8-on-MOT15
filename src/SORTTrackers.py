@@ -44,10 +44,11 @@ class SORTTrackers:
       detections_xywh = detections.xywh
 
       #-Prediction before matching
-      predictor.prediction_step(self.all_tracks)
+      for track in self.all_tracks:
+        predictor.prediction_step(self.all_tracks)
 
       #-Matching
-      matching = matcher.hungarian_algorithm(self.all_tracks, detections, MetricType.IoU)
+      matching = matcher.hungarian_algorithm(self.all_tracks, detections, MetricType.IOU)
 
       #-Prediction after matching
       for pair in matching["assignments"]:
@@ -74,7 +75,7 @@ class SORTTrackers:
         self.all_tracks.append(new_track)
       
       #-Visualizer
-      printing_matrix = self._tracks_to_matrix_xyxy(self.all_tracks, produce_id=True)
+      printing_matrix = MatrixUtils.tracks_to_matrix_xyxy(self.all_tracks, produce_id=True)
       visualizer.draw(frame, printing_matrix)
 
       

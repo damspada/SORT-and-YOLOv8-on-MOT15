@@ -35,7 +35,7 @@ class IoU_metric:
     Input tensors must contain bounding boxes in [x1, y1, x2, y2] format.
     """
     tracks_xyxy = MatrixUtils.tracks_to_matrix_xyxy(tracks)
-    return self.iou_cost(tracks_xyxy, detections.xyxy)
+    return self.iou_matrix(tracks_xyxy, detections.xyxy)
 
   @staticmethod
   def iou_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> torch.Tensor:

@@ -37,7 +37,7 @@ class Track:
     return self.detections_missed >= MAX_FRAME_LOST
 
   def extract_bbox_in_row(self):
-    return (self.X_hat @ self.H).T
+    return (self.H @ self.X_hat).T
 
 
 
