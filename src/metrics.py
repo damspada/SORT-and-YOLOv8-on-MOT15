@@ -40,7 +40,7 @@ class IoU_metric:
     return self.iou_matrix(tracks_xyxy, detections.xyxy)
 
   @staticmethod
-  def iou_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> Tuple(torch.Tensor, int):
+  def iou_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> Tuple[torch.Tensor, int]:
     """
     tracks shape:     (N,4)
     detections shape: (M,4)
@@ -80,13 +80,13 @@ class Mahalanobis_metric:
     return self.mahalabobis_matrix(tracks_xywh, detections.xywh, P)
 
   @staticmethod
-  def mahalabobis_matrix(HX: torch.Tensor, D: torch.Tensor, P: torch.Tensor) -> Tuple(torch.Tensor, int):
+  def mahalabobis_matrix(HX: torch.Tensor, D: torch.Tensor, P: torch.Tensor) -> Tuple[torch.Tensor, int]:
     diff = D.unsqueeze(0) - HX.unsqueeze(1)  # (1, M, 4) - (N, 1, 4) = (N, M, 4)
 
-    HP = Predictor.H.unsqueeze(0) @ P         # (N,4,6) @ (6,6) = (N,4,6)
-    HP_HT = HP @ Predictor.H.transpose(1,2)   # (N,4,6) @ (6,4) = (N,4,4)
-    S =  HP_HT + Predictor.R                  # (N,4,4) + (4,4) = (N,4,4)
-    S_inv = torch.linalg.inv(S)               # (N, 4, 4)
+    HP = Predictor.H.unsqueeze(0) @ P     # (N,4,6) @ (6,6) = (N,4,6)
+    HP_HT = HP @ Predictor.H.T            # (N,4,6) @ (6,4) = (N,4,4)
+    S =  HP_HT + Predictor.R              # (N,4,4) + (4,4) = (N,4,4)
+    S_inv = torch.linalg.inv(S)           # (N, 4, 4)
 
     # Rivedere bene questa funzione
     mahal = torch.einsum('nij,njk,nij->ni', diff, S_inv, diff)  # (N, M)
@@ -99,7 +99,7 @@ class Mahalanobis_metric:
     
 
 class Embedding_metric:
-  def __call__(self, tracks: List[Track], detections: Boxes) -> torch.Tensor:
+  def __call__(self, tracks: List[Track], detections: Boxes) -> Tuple[torch.Tensor, int]:
     pass
 
 

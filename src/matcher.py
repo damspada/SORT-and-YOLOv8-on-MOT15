@@ -132,7 +132,8 @@ class Matcher:
     """
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     metric = Metric(metric_type)
-    H, threshold = MatrixUtils.rectangle_to_square(metric.metric(tracks, detections))
+    H, threshold = metric.metric(tracks, detections)
+    H = MatrixUtils.rectangle_to_square(H)
 
     # Step 1 -> Subtract from each row the minimum element in it
     H_current = self._subtract_on_dimensions(H, dim=1)

@@ -68,7 +68,7 @@ class MatrixUtils:
       return boxes_xyxy
 
   @staticmethod
-  def tracks_to_matrix_xywh_and_P(tracks: List[Track], produce_id: bool = False) -> Tuple(torch.Tensor, torch.Tensor):
+  def tracks_to_matrix_xywh_and_P(tracks: List[Track], produce_id: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Converts a list of tracks into a (N,4) tensor of boxes in [x, y, w, h] format.
     And returns a tensor (N,6,6) with all the matrices P of each track.
@@ -77,12 +77,15 @@ class MatrixUtils:
     P_list = []
 
     for track in tracks:
-        track_xywh = track.extract_bbox_in_row()
-        box_list.append(track_xywh)
-        P_list = track.P
+      track_xywh = track.extract_bbox_in_row()
+      box_list.append(track_xywh)
+      P_list.append(track.P.unsqueeze(0))
+
+    if not box_list:
+      return torch.empty((0, 4)), torch.empty((0, 6, 6))
 
     boxes_xywh = torch.cat(box_list, dim=0)
-    tensor_P = 0
+    tensor_P = torch.cat(P_list, dim=0)
     return boxes_xywh, tensor_P
 
 

@@ -45,7 +45,7 @@ class SORTTrackers:
 
       #-Prediction before matching
       for track in self.all_tracks:
-        predictor.prediction_step(self.all_tracks)
+        predictor.prediction_step(track)
 
       #-Matching
       matching = matcher.hungarian_algorithm(self.all_tracks, detections, MetricType.IOU)

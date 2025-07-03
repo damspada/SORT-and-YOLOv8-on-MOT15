@@ -1,5 +1,4 @@
 import torch
-from src.predictor import Predictor
 from variables import MAX_FRAME_LOST
 
 class Track:
@@ -31,6 +30,7 @@ class Track:
     return self.detections_missed >= MAX_FRAME_LOST
 
   def extract_bbox_in_row(self):
+    from src.predictor import Predictor
     return (Predictor.H @ self.X_hat).T
 
 
