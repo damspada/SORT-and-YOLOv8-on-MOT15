@@ -1,5 +1,5 @@
 import torch
-from typing import List
+from typing import List, Tuple
 from src.track import Track
 
 class MatrixUtils:
@@ -66,6 +66,25 @@ class MatrixUtils:
       return torch.cat((ids, boxes_xyxy), dim=1)
     else:
       return boxes_xyxy
+
+  @staticmethod
+  def tracks_to_matrix_xywh_and_P(tracks: List[Track], produce_id: bool = False) -> Tuple(torch.Tensor, torch.Tensor):
+    """
+    Converts a list of tracks into a (N,4) tensor of boxes in [x, y, w, h] format.
+    And returns a tensor (N,6,6) with all the matrices P of each track.
+    """
+    box_list = []
+    P_list = []
+
+    for track in tracks:
+        track_xywh = track.extract_bbox_in_row()
+        box_list.append(track_xywh)
+        P_list = track.P
+
+    boxes_xywh = torch.cat(box_list, dim=0)
+    tensor_P = 0
+    return boxes_xywh, tensor_P
+
 
 
 

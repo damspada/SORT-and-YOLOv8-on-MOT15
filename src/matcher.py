@@ -10,7 +10,6 @@ from networkx.algorithms.bipartite import to_vertex_cover
 from src.track import Track
 from src.metrics import Metric
 from src.metrics import MetricType
-from variables import THRESHOLD
 from src.matrixUtils import MatrixUtils
 
 class Matcher:
@@ -105,12 +104,11 @@ class Matcher:
 
 
   @staticmethod #Rimuovere???
-  def _assign_detections_with_threshold(H: torch.Tensor, matching: List, original_dim: Tuple):
+  def _assign_detections_with_threshold(H: torch.Tensor, matching: List, original_dim: Tuple, threshold:int):
     """
     Processes the matching to produce track-detection pairs, lost tracks in the current frame,
     and new detections. Also discards assignments involving auxiliary dimensions. 
     """
-    threshold = THRESHOLD
     results = {
       "assignments" : [],
       "lost_tracks" : [],
@@ -134,7 +132,7 @@ class Matcher:
     """
     # Step 0 -> Build hungarian matrix (N,N) with the cost
     metric = Metric(metric_type)
-    H = MatrixUtils.rectangle_to_square(metric.metric(tracks, detections))
+    H, threshold = MatrixUtils.rectangle_to_square(metric.metric(tracks, detections))
 
     # Step 1 -> Subtract from each row the minimum element in it
     H_current = self._subtract_on_dimensions(H, dim=1)
@@ -153,7 +151,7 @@ class Matcher:
     # Step 5 -> Assign detections to tracks, don't accept the pairs with high cost
     #RIVEDERE
     original_dim = (len(tracks), detections.shape[0])
-    results = self._assign_detections_with_threshold(H, matching, original_dim) #, threshold)
+    results = self._assign_detections_with_threshold(H, matching, original_dim, threshold)
 
     return results
     

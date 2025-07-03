@@ -1,4 +1,5 @@
 import torch
+from src.predictor import Predictor
 from variables import MAX_FRAME_LOST
 
 class Track:
@@ -25,19 +26,12 @@ class Track:
       [0, 0, 0, 0,  0,  900]
     ], dtype=torch.float32)
 
-    self.H = torch.tensor([
-      [1, 0, 0, 0, 0, 0],
-      [0, 1, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0],
-      [0, 0, 0, 1, 0, 0]
-    ], dtype=torch.float32)
-
   def increse_detections_missed(self):
     self.detections_missed += 1
     return self.detections_missed >= MAX_FRAME_LOST
 
   def extract_bbox_in_row(self):
-    return (self.H @ self.X_hat).T
+    return (Predictor.H @ self.X_hat).T
 
 
 

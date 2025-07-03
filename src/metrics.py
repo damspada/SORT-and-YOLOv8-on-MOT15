@@ -1,16 +1,20 @@
 import torch
+from scipy.stats import chi2
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 from ultralytics.engine.results import Boxes
 
+from src.predictor import Predictor
 from src.track import Track
+from variables import THRESHOLD_IOU, ALPHA_CHI
 from src.matrixUtils import MatrixUtils
 
 
 class MetricType(Enum):
-  MAHALANOBIS = "Mahalanobis"
-  EMBEDDING = "Embedding"
   IOU = "IoU"
+  EMBEDDING = "Embedding"
+  MAHALANOBIS = "Mahalanobis"
+
 
 class Metric:
   def __init__(self, metric_type: MetricType):
@@ -24,8 +28,6 @@ class Metric:
       return Embedding_metric()
     elif metric_type == MetricType.IOU:
       return IoU_metric()
-    else:
-      raise ValueError(f"Unsupported metric type: {metric_type}")
 
 
 class IoU_metric:
@@ -38,7 +40,7 @@ class IoU_metric:
     return self.iou_matrix(tracks_xyxy, detections.xyxy)
 
   @staticmethod
-  def iou_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> torch.Tensor:
+  def iou_matrix(tracks: torch.Tensor, detections: torch.Tensor) -> Tuple(torch.Tensor, int):
     """
     tracks shape:     (N,4)
     detections shape: (M,4)
@@ -68,17 +70,37 @@ class IoU_metric:
     union_boxes = tracks_areas + detection_areas - intersection_boxes #(N,M)
 
     # The Hungarian algorithm minimizes cost, so we use 1 - IoU
-    return torch.ones_like(union_boxes) - (intersection_boxes / union_boxes) #(N,M)
+    H = torch.ones_like(union_boxes) - (intersection_boxes / union_boxes) #(N,M)
+    return H, THRESHOLD_IOU
 
 
+class Mahalanobis_metric:
+  def __call__(self, tracks: List[Track], detections: Boxes) -> torch.Tensor:
+    tracks_xywh, P = MatrixUtils.tracks_to_matrix_xywh_and_P(tracks)
+    return self.mahalabobis_matrix(tracks_xywh, detections.xywh, P)
+
+  @staticmethod
+  def mahalabobis_matrix(HX: torch.Tensor, D: torch.Tensor, P: torch.Tensor) -> Tuple(torch.Tensor, int):
+    diff = D.unsqueeze(0) - HX.unsqueeze(1)  # (1, M, 4) - (N, 1, 4) = (N, M, 4)
+
+    HP = Predictor.H.unsqueeze(0) @ P         # (N,4,6) @ (6,6) = (N,4,6)
+    HP_HT = HP @ Predictor.H.transpose(1,2)   # (N,4,6) @ (6,4) = (N,4,4)
+    S =  HP_HT + Predictor.R                  # (N,4,4) + (4,4) = (N,4,4)
+    S_inv = torch.linalg.inv(S)               # (N, 4, 4)
+
+    # Rivedere bene questa funzione
+    mahal = torch.einsum('nij,njk,nij->ni', diff, S_inv, diff)  # (N, M)
+
+    k = HX.shape[1]
+    alpha = ALPHA_CHI
+    threshold = chi2.ppf(alpha, df=k)
+
+    return mahal, threshold
+    
 
 class Embedding_metric:
   def __call__(self, tracks: List[Track], detections: Boxes) -> torch.Tensor:
     pass
 
 
-
-class Mahalanobis_metric:
-  def __call__(self, tracks: List[Track], detections: Boxes) -> torch.Tensor:
-    pass
 
