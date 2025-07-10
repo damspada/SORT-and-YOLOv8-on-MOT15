@@ -1,5 +1,6 @@
 import cv2
 import glob
+import numpy as np
 import os
 import configparser
 from variables import SEQ_INFO
@@ -26,7 +27,7 @@ class VideoManager:
     self._current_frame_idx = 0
     return self
 
-  def __next__(self):
+  def __next__(self) -> np.ndarray:
     if self._current_frame_idx >= self._MAX_FRAME:
       raise StopIteration
     frame_path = self._frame_paths[self._current_frame_idx]

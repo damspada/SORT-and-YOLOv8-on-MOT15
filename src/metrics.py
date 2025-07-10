@@ -73,7 +73,6 @@ class IoU_metric:
     H = torch.ones_like(union_boxes) - (intersection_boxes / union_boxes) #(N,M)
     return H, THRESHOLD_IOU
 
-
 class Mahalanobis_metric:
   def __call__(self, tracks: List[Track], detections: Boxes) -> torch.Tensor:
     tracks_xywh, P = MatrixUtils.tracks_to_matrix_xywh_and_P(tracks)

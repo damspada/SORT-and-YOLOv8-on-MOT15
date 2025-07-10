@@ -22,8 +22,11 @@ class Matcher:
     """
     Subtracts the minimum value along the specified dimension from each element in that dimension.
     """
-    mins, _ = H.min(dim = dim, keepdim=True)
-    return H - mins
+    if H.shape[0] == 0:
+      return H
+    else:
+      mins, _ = H.min(dim = dim, keepdim=True)
+      return H - mins
 
 
   @staticmethod

@@ -21,7 +21,7 @@ class SORTTrackers:
   def __init__(self):
     self.all_tracks = []  
 
-  def run_tracking(self, input_path, output_path=None):
+  def run_tracking(self, input_path, metric:MetricType, output_path=None):
     videoManager = VideoManager(input_path)
     detector = Detector()
     matcher = Matcher()
@@ -39,8 +39,8 @@ class SORTTrackers:
       n_frame += 1
 
       #-Detection
-      results = detector.get_detection_results(frame)[0]
-      detections = results.boxes
+      result = detector.get_detection_results(frame)[0]
+      detections = result.boxes
       detections_xywh = detections.xywh
 
       #-Prediction before matching
@@ -48,7 +48,7 @@ class SORTTrackers:
         predictor.prediction_step(track)
 
       #-Matching
-      matching = matcher.hungarian_algorithm(self.all_tracks, detections, MetricType.IOU)
+      matching = matcher.hungarian_algorithm(self.all_tracks, detections, metric)
 
       #-Prediction after matching
       for pair in matching["assignments"]:
