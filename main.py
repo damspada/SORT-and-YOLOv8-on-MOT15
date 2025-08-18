@@ -12,5 +12,5 @@ if __name__ == "__main__":
   sort.run_tracking(
     input_path = INPUT_LOCAL,
     metric = MetricType.IOU,
-    output_path = None
+    output_path = OUTPUT_LOCAL
   )

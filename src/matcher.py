@@ -139,10 +139,10 @@ class Matcher:
     H = MatrixUtils.rectangle_to_square(H)
 
     # Step 1 -> Subtract from each row the minimum element in it
-    H_current = self._subtract_on_dimensions(H, dim=1)
+    H_current = self._subtract_on_dimensions(H, dim=0)
 
     # Step 2 -> Subtract from each column the minimum element in it
-    H_current = self._subtract_on_dimensions(H_current, dim=0)
+    H_current = self._subtract_on_dimensions(H_current, dim=1)
 
     # Step 3 -> Cross the 0's with the minimum number of lines needed (if N==#lines jump to 5)
     matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)
@@ -153,7 +153,6 @@ class Matcher:
       matching, vertex_cover = self._maximum_matching_minimum_vertex_cover(H_current)    
     
     # Step 5 -> Assign detections to tracks, don't accept the pairs with high cost
-    #RIVEDERE
     original_dim = (len(tracks), detections.shape[0])
     results = self._assign_detections_with_threshold(H, matching, original_dim, threshold)
 
