@@ -52,15 +52,17 @@ class SORTTrackers:
 
       #-Prediction after matching
       for pair in matching["assignments"]:
-        track_to_udpdate = self.all_tracks[pair[0]]
+        track_to_update = self.all_tracks[pair[0]]
         new_measures = detections_xywh[pair[1], :].unsqueeze(1)
-        predictor.estimated_step(track_to_udpdate, new_measures)
+        predictor.estimated_step(track_to_update, new_measures)
+        track_to_update.update_hits()
+        track_to_update.reset_detections_missed()
       
       tracks_to_delete = []
       for index in matching["lost_tracks"]:
         track_to_predict = self.all_tracks[index]
-        to_delect = track_to_predict.increse_detections_missed()
-        if to_delect:
+        to_delete = track_to_predict.increase_detections_missed()
+        if to_delete:
           tracks_to_delete.append(index)
         else:
           predictor.prediction_step(track_to_predict)
@@ -75,8 +77,7 @@ class SORTTrackers:
         self.all_tracks.append(new_track)
       
       #-Visualizer
-      printing_matrix = MatrixUtils.tracks_to_matrix_xyxy(self.all_tracks, produce_id=True)
-      visualizer.draw(frame, printing_matrix)
-
-      
+      confirmed_tracks = [track for track in self.all_tracks if track.check_confirmed_track()]
+      printing_matrix = MatrixUtils.tracks_to_matrix_xyxy(confirmed_tracks, produce_id=True)
+      visualizer.draw(frame, printing_matrix)      
      
