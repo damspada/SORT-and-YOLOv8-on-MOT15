@@ -1,5 +1,6 @@
 import torch
 from src.track import Track
+from variables import Q_POSITION_NOISE, Q_DIMENSION_NOISE, Q_VELOCITY_NOISE
 
 class Predictor:
   """
@@ -7,12 +8,12 @@ class Predictor:
   """
   # It could change after test
   Q = torch.tensor([
-    [4, 0,  0,   0,   0,   0 ],
-    [0, 4,  0,   0,   0,   0 ],
-    [0, 0, 50,   0,   0,   0 ],
-    [0, 0,  0,  50,   0,   0 ],
-    [0, 0,  0,   0,  100,  0 ],
-    [0, 0,  0,   0,   0,  100]
+    [Q_POSITION_NOISE, 0,  0,   0,   0,   0 ],
+    [0, Q_POSITION_NOISE, 0,   0,   0,   0 ],
+    [0, 0, Q_DIMENSION_NOISE, 0,   0,   0 ],
+    [0, 0,  0,  Q_DIMENSION_NOISE,   0,   0 ],
+    [0, 0,  0,   0,  Q_VELOCITY_NOISE,  0 ],
+    [0, 0,  0,   0,   0,  Q_VELOCITY_NOISE]
   ], dtype=torch.float32)
 
   H = torch.tensor([
