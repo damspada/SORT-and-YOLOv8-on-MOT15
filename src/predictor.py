@@ -6,16 +6,18 @@ class Predictor:
   """
   The prediction is done with the Kalman Filter algorithm
   """
+  
+  # Process noise covariance matrix Q - defines uncertainty in motion model
   # It could change after test
   Q = torch.tensor([
     [Q_POSITION_NOISE, 0,  0,   0,   0,   0 ],
-    [0, Q_POSITION_NOISE, 0,   0,   0,   0 ],
-    [0, 0, Q_DIMENSION_NOISE, 0,   0,   0 ],
+    [0, Q_POSITION_NOISE,  0,   0,   0,   0 ],
+    [0, 0, Q_DIMENSION_NOISE,   0,   0,   0 ],
     [0, 0,  0,  Q_DIMENSION_NOISE,   0,   0 ],
     [0, 0,  0,   0,  Q_VELOCITY_NOISE,  0 ],
     [0, 0,  0,   0,   0,  Q_VELOCITY_NOISE]
   ], dtype=torch.float32)
-
+  
   H = torch.tensor([
     [1, 0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0, 0],
